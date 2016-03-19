@@ -35,7 +35,7 @@
                 bookmarked = App.userBookmarks.indexOf(imdb) !== -1,
                 itemtype = this.model.get('type'),
                 images = this.model.get('images'),
-                img = (images) ? images.poster : this.model.get('image'),
+                img = (images && typeof images.poster !== 'object') ? images.poster : this.model.get('image'),
                 watched, cached, that = this;
 
             switch (itemtype) {
@@ -107,15 +107,15 @@
                 var images = model.get('images');
                 var image = model.get('image');
                 var cover = model.get('cover');
-                if (images && images.poster) {
+                if (images && images.poster && images.poster.medium) {
                     return images.poster.medium;
-                } else if (image) {
+                } else if (image && image instanceof String) {
                     return image;
                 } else if (cover) {
                     return cover;
                 }
 
-                return null;
+                return 'images/posterholder.png';
             };
 
             var coverUrl;

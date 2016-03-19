@@ -12,7 +12,55 @@ var Settings = {
     changelogUrl: 'https://github.com/butterproject/butter-desktop/commits/master',
     issuesUrl: 'https://github.com/butterproject/butter-desktop/issues',
     sourceUrl: 'https://github.com/butterproject/butter-desktop/',
-    commitUrl: 'https://github.com/butterproject/butter-desktop/commit'
+    commitUrl: 'https://github.com/butterproject/butter-desktop/commit',
+    updateKey: '-----BEGIN PUBLIC KEY-----\n' +
+        'MIIBtjCCASsGByqGSM44BAEwggEeAoGBAPNM5SX+yR8MJNrX9uCQIiy0t3IsyNHs\n' +
+        'HWA180wDDd3S+DzQgIzDXBqlYVmcovclX+1wafshVDw3xFTJGuKuva7JS3yKnjds\n' +
+        'NXbvM9CrJ2Jngfd0yQPmSh41qmJXHHSwZfPZBxQnspKjbcC5qypM5DqX9oDSJm2l\n' +
+        'fM/weiUGnIf7AhUAgokTdF7G0USfpkUUOaBOmzx2RRkCgYAyy5WJDESLoU8vHbQc\n' +
+        'rAMnPZrImUwjFD6Pa3CxhkZrulsAOUb/gmc7B0K9I6p+UlJoAvVPXOBMVG/MYeBJ\n' +
+        '19/BH5UNeI1sGT5/Kg2k2rHVpuqzcvlS/qctIENgCNMo49l3LrkHbJPXKJ6bf+T2\n' +
+        '8lFWRP2kVlrx/cHdqSi6aHoGTAOBhAACgYBTNeXBHbWDOxzSJcD6q4UDGTnHaHHP\n' +
+        'JgeCrPkH6GBa9azUsZ+3MA98b46yhWO2QuRwmFQwPiME+Brim3tHlSuXbL1e5qKf\n' +
+        'GOm3OxA3zKXG4cjy6TyEKajYlT45Q+tgt1L1HuGAJjWFRSA0PP9ctC6nH+2N3HmW\n' +
+        'RTcms0CPio56gg==\n' +
+        '-----END PUBLIC KEY-----\n'
+};
+
+Settings.providers = {
+    movie: {
+        order: 1,
+        name: 'Movies',
+        uri: ['vodo', 'archive',
+          //'stremio?auth={"url":"http://api8.herokuapp.com","key":"423f59935153f2f5d2db0f6c9b812592b61b3737"}&url=http://localhost:9005'
+        ]
+    },
+    tvshow: {
+        order: 2,
+        name: 'Series',
+        uri: [
+            'ccc',
+            'youtube?channel=HolaSoyGerman',
+            'youtube?channel=JulianSerrano7',
+            'youtube?channel=LasCronicasDeAlfredo',
+            'youtube?channel=maritobaracus',
+            'youtube?channel=petercapusottotv&titleRegex=[0-9]+[aª] +Temporada',
+            'youtube?channel=sincodificar2',
+            'youtube?channel=lady16makeup',
+            'youtube?channel=werevertumorro',
+            'youtube?channel=DrossRotzank',
+            'youtube?channel=DeiGamer',
+            'youtube?channel=ReinoMariaElenaWalsh',
+            'youtube?channel=LucasCastelvlogs',
+            'youtube?channel=thedevilwearsvitton',
+            'youtube?channel=elbananeropuntocom',
+        ]
+    },
+    subtitle: 'OpenSubtitles',
+    metadata: 'Trakttv',
+    tvst: 'TVShowTime',
+
+    torrentCache: 'TorrentCache',
 };
 
 // User interface
@@ -39,6 +87,7 @@ Settings.chosenPlayer = 'local';
 Settings.alwaysOnTop = false;
 Settings.theme = 'Official_-_Dark_theme';
 Settings.ratingStars = true; //trigger on click in details
+Settings.hideSeasons = true;
 Settings.startScreen = 'Movies';
 Settings.lastTab = '';
 Settings.rememberFilters = false;
@@ -231,20 +280,23 @@ var AdvSettings = {
         var _url = url.parse(endpoint.url);
         win.debug('Checking %s endpoint', _url.hostname);
 
+        function tryNextEndpoint() {
+            if (endpoint.index < endpoint.proxies.length - 1) {
+                endpoint.index++;
+                AdvSettings.checkApiEndpoint(endpoint, defer);
+            } else {
+                endpoint.index = 0;
+                endpoint.ssl = undefined;
+                _.extend(endpoint, endpoint.proxies[endpoint.index]);
+                defer.resolve();
+            }
+        }
+
         if (endpoint.ssl === false) {
-            var timeoutWrapper = function (req) {
-                return function () {
-                    win.warn('[%s] Endpoint timed out',
-                        _url.hostname);
-                    req.abort();
-                    tryNextEndpoint();
-                };
-            };
             var request = http.get({
                 hostname: _url.hostname
             }, function (res) {
                 res.once('data', function (body) {
-                    clearTimeout(timeout);
                     res.removeAllListeners('error');
                     // Doesn't match the expected response
                     if (!_.isRegExp(endpoint.fingerprint) || !endpoint.fingerprint.test(body.toString('utf8'))) {
@@ -260,13 +312,14 @@ var AdvSettings = {
                     win.warn('[%s] Endpoint failed [%s]',
                         _url.hostname,
                         e.message);
-                    clearTimeout(timeout);
                     tryNextEndpoint();
                 });
+            }).setTimeout(5000, function () {
+				win.warn('[%s] Endpoint timed out',
+					_url.hostname);
+				request.abort();
+				tryNextEndpoint();
             });
-
-            var fn = timeoutWrapper(request);
-            var timeout = setTimeout(fn, 5000);
         } else {
             tls.connect(443, _url.hostname, {
                 servername: _url.hostname,
@@ -301,18 +354,6 @@ var AdvSettings = {
                 this.end();
                 tryNextEndpoint();
             }).setTimeout(5000);
-        }
-
-        function tryNextEndpoint() {
-            if (endpoint.index < endpoint.proxies.length - 1) {
-                endpoint.index++;
-                AdvSettings.checkApiEndpoint(endpoint, defer);
-            } else {
-                endpoint.index = 0;
-                endpoint.ssl = undefined;
-                _.extend(endpoint, endpoint.proxies[endpoint.index]);
-                defer.resolve();
-            }
         }
 
         return defer.promise;

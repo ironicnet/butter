@@ -392,7 +392,8 @@ var Database = {
 
         // we'll intiatlize our settings and our API SSL Validation
         // we build our settings array
-        return Database.getUserInfo()
+        return App.bootstrapPromise
+            .then(Database.getUserInfo)
             .then(Database.getSettings)
             .then(function (data) {
                 if (data !== null) {
@@ -421,8 +422,8 @@ var Database = {
                 return AdvSettings.setup();
             })
             .then(function () {
-                App.Trakt = App.Config.getProvider('metadata');
-                App.TVShowTime = App.Config.getProvider('tvst');
+                App.Trakt = App.Config.getProviderForType('metadata');
+                App.TVShowTime = App.Config.getProviderForType('tvst');
                 // check update
                 var updater = new App.Updater();
 

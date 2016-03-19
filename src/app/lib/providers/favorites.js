@@ -3,6 +3,9 @@
 
     var Favorites = function () {};
     Favorites.prototype.constructor = Favorites;
+    Favorites.prototype.config = {
+        name: 'Favorites'
+    };
 
     var queryTorrents = function (filters) {
         return App.db.getBookmarks(filters)
@@ -183,6 +186,6 @@
             });
     };
 
-    App.Providers.Favorites = Favorites;
+    App.Providers.install(Favorites);
 
 })(window.App);

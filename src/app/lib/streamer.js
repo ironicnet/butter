@@ -21,7 +21,7 @@
     var watchState = function (stateModel) {
 
 
-        if (engine != null) {
+        if (engine !== null) {
 
             var swarm = engine.swarm;
             var state = 'connecting';
@@ -81,7 +81,8 @@
             trackers: [
                 'udp://tracker.openbittorrent.com:80',
                 'udp://tracker.coppersurfer.tk:6969',
-                'udp://open.demonii.com:1337'
+                'udp://9.rarbg.com:2710/announce',
+                'udp://tracker.publicbt.com:80/announce'
             ],
             port: parseInt(Settings.streamPort, 10) || 0,
             tmp: App.settings.tmpLocation,
@@ -189,63 +190,10 @@
 
     };
 
-
-    var Preload = {
-        start: function (model) {
-
-            if (Streamer.currentTorrent && model.get('torrent') === Streamer.currentTorrent.get('torrent')) {
-                return;
-            }
-            this.currentTorrent = model;
-
-            win.debug('Preloading model:', model.get('title'));
-            var torrent_url = model.get('torrent');
-
-            readTorrent(torrent_url, function (err, torrent) {
-
-                win.debug('Preloading torrent:', torrent.name);
-                var tmpFilename = torrent.infoHash;
-                tmpFilename = tmpFilename.replace(/([^a-zA-Z0-9-_])/g, '_'); // +'-'+ (new Date()*1);
-                var tmpFile = path.join(App.settings.tmpLocation, tmpFilename);
-                subtitles = torrent.subtitle;
-
-                var torrentPeerId = crypt.pseudoRandomBytes(10).toString('hex');
-
-                win.debug('Preloading movie to %s', tmpFile);
-
-                preload_engine = peerflix(torrent_url, {
-                    connections: parseInt(Settings.connectionLimit, 10) || 100, // Max amount of peers to be connected to.
-                    dht: parseInt(Settings.dhtLimit, 10) || 50,
-                    port: 0,
-                    tmp: App.settings.tmpLocation,
-                    path: tmpFile, // we'll have a different file name for each stream also if it's same torrent in same session
-                    index: torrent.file_index,
-                    id: torrentPeerId
-                });
-
-            });
-
-
-        },
-
-        stop: function () {
-
-            if (preload_engine) {
-                if (preload_engine.server._handle) {
-                    preload_engine.server.close();
-                }
-                preload_engine.destroy();
-                win.info('Preloading stopped');
-            }
-
-            preload_engine = null;
-        }
-    };
-
     var Streamer = {
         start: function (model) {
             var torrent = model.get('torrent');
-            var torrentUrl = torrent.url ? torrent.url : torrent.magnet;
+            var torrentUrl = torrent.magnet || torrent.url || torrent;
 
             var torrent_read = false;
             if (model.get('torrent_read')) {
@@ -280,10 +228,13 @@
                     // did we need to extract subtitle ?
                     var extractSubtitle = model.get('extract_subtitle');
 
+                    // used to rgx title to get subtitles for custom torrents
+                    var title = model.get('title');
+
                     var getSubtitles = function (data) {
                         win.debug('Subtitles data request:', data);
 
-                        var subtitleProvider = App.Config.getProvider('tvshowsubtitle');
+                        var subtitleProvider = App.Config.getProviderForType('subtitle');
 
                         subtitleProvider.fetch(data).then(function (subs) {
                             if (subs && Object.keys(subs).length > 0) {
@@ -359,9 +310,6 @@
                     if (model.get('type') === 'movie') {
                         hasSubtitles = true;
                     }
-
-                    //Try get subtitles for custom torrents
-                    var title = model.get('title');
 
                     if (!title) { //From ctrl+v magnet or drag torrent
                         for (var f in torrent.files) {
@@ -490,6 +438,58 @@
             subtitleDownloading = false;
             App.vent.off('subtitle:downloaded');
             win.info('Streaming cancelled');
+        }
+    };
+
+    var Preload = {
+        start: function (model) {
+
+            if (Streamer.currentTorrent && model.get('torrent') === Streamer.currentTorrent.get('torrent')) {
+                return;
+            }
+            this.currentTorrent = model;
+
+            win.debug('Preloading model:', model.get('title'));
+            var torrent_url = model.get('torrent');
+
+            readTorrent(torrent_url, function (err, torrent) {
+
+                win.debug('Preloading torrent:', torrent.name);
+                var tmpFilename = torrent.infoHash;
+                tmpFilename = tmpFilename.replace(/([^a-zA-Z0-9-_])/g, '_'); // +'-'+ (new Date()*1);
+                var tmpFile = path.join(App.settings.tmpLocation, tmpFilename);
+                subtitles = torrent.subtitle;
+
+                var torrentPeerId = crypt.pseudoRandomBytes(10).toString('hex');
+
+                win.debug('Preloading movie to %s', tmpFile);
+
+                preload_engine = peerflix(torrent_url, {
+                    connections: parseInt(Settings.connectionLimit, 10) || 100, // Max amount of peers to be connected to.
+                    dht: parseInt(Settings.dhtLimit, 10) || 50,
+                    port: 0,
+                    tmp: App.settings.tmpLocation,
+                    path: tmpFile, // we'll have a different file name for each stream also if it's same torrent in same session
+                    index: torrent.file_index,
+                    id: torrentPeerId
+                });
+
+            });
+
+
+        },
+
+        stop: function () {
+
+            if (preload_engine) {
+                if (preload_engine.server._handle) {
+                    preload_engine.server.close();
+                }
+                preload_engine.destroy();
+                win.info('Preloading stopped');
+            }
+
+            preload_engine = null;
         }
     };
 

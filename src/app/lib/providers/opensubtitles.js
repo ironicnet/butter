@@ -1,9 +1,20 @@
 (function (App) {
     'use strict';
-    var OS = require('opensubtitles-api');
+    var OS = require('opensubtitles-api'),
+        openSRT;
 
-    var OpenSubtitles = function () {};
+    var OpenSubtitles = function () {
+        openSRT = new OS({
+            useragent: 'OSTestUserAgent', //TODO: register UA 'Butter v' + (Settings.version || 1),
+            username: Settings.opensubtitlesUsername,
+            password: Settings.opensubtitlesPassword
+        });
+    };
+
     OpenSubtitles.prototype.constructor = OpenSubtitles;
+    OpenSubtitles.prototype.config = {
+        name: 'OpenSubtitles'
+    };
 
     var normalizeLangCodes = function (data) {
         if ('pb' in data) {
@@ -22,16 +33,14 @@
     };
 
     OpenSubtitles.prototype.fetch = function (queryParams) {
-        var openSRT = new OS('Butter Time v' + (Settings.version || 1), Settings.opensubtitlesUsername, Settings.opensubtitlesPassword);
         return openSRT.search(queryParams)
             .then(formatForButter);
     };
 
     OpenSubtitles.prototype.upload = function (queryParams) {
-        var openSRT = new OS('Butter v' + (Settings.version || 1), Settings.opensubtitlesUsername, Settings.opensubtitlesPassword);
         return openSRT.upload(queryParams);
     };
 
-    App.Providers.OpenSubtitles = OpenSubtitles;
+    App.Providers.install(OpenSubtitles);
 
 })(window.App);

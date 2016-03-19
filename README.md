@@ -12,22 +12,29 @@ Visit the project's website at <http://butterproject.org>.
 
 ## Getting Involved
 
-Want to report a bug, request a feature, contribute to or translate Butter? Check out our in-depth guide to [Contributing to Butter](CONTRIBUTING.md). We need all the help we can get! You can also join our [community](README.md#community) to keep up-to-date and meet other Butterrs.
+Want to report a bug, request a feature, contribute to or translate Butter? Check out our in-depth guide to [Contributing to Butter](CONTRIBUTING.md#contributing-to-butter). We need all the help we can get! You can also join our [community](README.md#community) to keep up-to-date and meet other Butterrs.
 
 ## Getting Started
 
 If you're comfortable getting up and running from a `git clone`, this method is for you.
 
-If you clone the GitHub repository, you will need to build a number of assets using grunt.
+After you clone the GitHub repository, you will need to build a number of assets using grunt.
 
 The [master](https://github.com/butterproject/butter-desktop) branch which contains the latest release.
+
+#### Quickstart with `npm start`:
+
+1. `npm install -g grunt-cli bower`
+2. `npm start` (this runs `npm install && grunt build && grunt start` for you)
+
+If you want to use the more granular control over whats getting run, use this: 
 
 #### Quickstart:
 
 1. `npm install -g grunt-cli bower`
-1. `npm install`
-1. `grunt build`
-1. `grunt start`
+2. `npm install`
+3. `grunt build`
+4. `grunt start`
 
 If you encounter trouble with the above method, you can try:
 
@@ -40,9 +47,9 @@ If you encounter trouble with the above method, you can try:
 1. `grunt css`
 1. `grunt start`
 
-Optionally, you may simply run `./make_butter.sh` if you are on a linux or mac based operating system.
+Optionally, you may simply run `./make_butter.sh` if you are on a Linux or Mac based operating system.
 
-Full instructions & troubleshooting tips can be found in the [Contributing Guide](CONTRIBUTING.md)
+Full instructions & troubleshooting tips can be found in the [Contributing Guide](CONTRIBUTING.md#contributing-to-butter)
 
 <a name="community"></a>
 ## Community

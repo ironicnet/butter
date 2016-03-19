@@ -15,25 +15,26 @@
             q1080p: '#q1080',
             q720p: '#q720',
             q480p: '#q480',
-            bookmarkIcon: '.favourites-toggle'
+            bookmarkIcon: '.sha-bookmark',
+            seasonTab: '.sd-seasons'
         },
 
         events: {
-            'click .favourites-toggle': 'toggleFavorite',
-            'click .show-watched-toggle': 'markShowAsWatched',
+            'click .sha-bookmark': 'toggleFavorite',
+            'click .sha-watched': 'markShowAsWatched',
             'click .watched': 'toggleWatched',
             'click #watch-now': 'startStreaming',
             'click .close-icon': 'closeDetails',
             'click .tab-season': 'clickSeason',
             'click .tab-episode': 'clickEpisode',
-            'click .show-imdb-link': 'openIMDb',
-            'mousedown .show-magnet-link': 'openMagnet',
+            'click .shmi-imdb': 'openIMDb',
+            'mousedown .magnet-icon': 'openMagnet',
             'dblclick .tab-episode': 'dblclickEpisode',
             'click .q1080': 'toggleShowQuality',
             'click .q720': 'toggleShowQuality',
             'click .q480': 'toggleShowQuality',
             'click .playerchoicemenu li a': 'selectPlayer',
-            'click .rating-container-tv': 'switchRating',
+            'click .shmi-rating': 'switchRating',
             'click .health-icon': 'resetHealth'
         },
 
@@ -87,6 +88,15 @@
                 _this.initKeyboardShortcuts();
             });
 
+            var torrents = {};
+            _.each(this.model.get('episodes'), function (value, currentEpisode) {
+                if (!torrents[value.season]) {
+                    torrents[value.season] = {};
+                }
+                torrents[value.season][value.episode] = value;
+            });
+            this.model.set('torrents', torrents);
+            this.model.set('seasonCount', Object.keys(torrents).length);
         },
         renameUntitled: function () {
             var episodes = this.model.get('episodes');
@@ -112,21 +122,11 @@
             Mousetrap.bind(['ctrl+up', 'command+up'], _this.previousSeason);
             Mousetrap.bind(['ctrl+down', 'command+down'], _this.nextSeason);
             Mousetrap.bind('f', function () {
-                $('.favourites-toggle').click();
+                $('.sha-bookmark').click();
             });
         },
 
-        unbindKeyboardShortcuts: function () { // There should be a better way to do this
-            Mousetrap.unbind('w');
-            Mousetrap.unbind('f');
-            Mousetrap.unbind('q');
-            Mousetrap.unbind('up');
-            Mousetrap.unbind('down');
-            Mousetrap.unbind(['enter', 'space']);
-            Mousetrap.unbind(['esc', 'backspace']);
-            Mousetrap.unbind(['ctrl+up', 'command+up']);
-            Mousetrap.unbind(['ctrl+down', 'command+down']);
-        },
+        unbindKeyboardShortcuts: Mousetrap.reset,
 
         onShow: function () {
             bookmarked = App.userBookmarks.indexOf(this.model.get('imdb_id')) !== -1;
@@ -137,14 +137,14 @@
                 this.ui.bookmarkIcon.removeClass('selected');
             }
 
-            $('.star-container-tv,.show-imdb-link,.show-magnet-link').tooltip();
+            $('.star-container-tv,.shmi-imdb,.magnet-icon').tooltip();
 
-            var cbackground = $('.tv-cover').attr('data-bgr');
+            var cbackground = $('.shp-img').attr('data-bgr');
             var coverCache = new Image();
             coverCache.src = cbackground;
             coverCache.onload = function () {
                 try {
-                    $('.tv-cover')
+                    $('.shp-img')
                         .css('background-image', 'url(' + cbackground + ')')
                         .addClass('fadein');
                 } catch (e) {}
@@ -152,19 +152,19 @@
             };
             coverCache.onerror = function () {
                 try {
-                    $('.tv-cover')
+                    $('.shp-img')
                         .css('background-image', 'url("images/posterholder.png")')
                         .addClass('fadein');
                 } catch (e) {}
                 coverCache = null;
             };
 
-            var background = $('.tv-poster-background').attr('data-bgr');
+            var background = $('.shc-img').attr('data-bgr');
             var bgCache = new Image();
             bgCache.src = background;
             bgCache.onload = function () {
                 try {
-                    $('.tv-poster-background')
+                    $('.shc-img')
                         .css('background-image', 'url(' + background + ')')
                         .addClass('fadein');
                 } catch (e) {}
@@ -172,7 +172,7 @@
             };
             bgCache.onerror = function () {
                 try {
-                    $('.tv-poster-background')
+                    $('.shc-img')
                         .css('background-image', 'url("images/bg-header.jpg")')
                         .addClass('fadein');
                 } catch (e) {}
@@ -186,6 +186,10 @@
             if (AdvSettings.get('ratingStars') === false) {
                 $('.star-container-tv').addClass('hidden');
                 $('.number-container-tv').removeClass('hidden');
+            }
+
+            if (AdvSettings.get('hideSeasons') && this.model.get('seasonCount') < 2) {
+                this.ui.seasonTab.hide();
             }
 
             this.isShowWatched();
@@ -347,14 +351,14 @@
                 Database.checkEpisodeWatched(value)
                     .then(function (watched) {
                         if (!watched) {
-                            $('.show-watched-toggle').show();
+                            $('.sha-watched').show();
                         }
                     });
             });
         },
 
         markShowAsWatched: function () {
-            $('.show-watched-toggle').addClass('selected');
+            $('.sha-watched').addClass('selected');
 
             var tvdb_id = _this.model.get('tvdb_id');
             var imdb_id = _this.model.get('imdb_id');
@@ -373,7 +377,7 @@
                     .then(function (watched) {
                         if (!watched) {
                             App.vent.trigger('show:watched', value, 'seen');
-                            $('.show-watched-toggle').hide();
+                            $('.sha-watched').hide();
                         }
                     });
             });
@@ -610,13 +614,13 @@
 
             $('.tab-episode.active').removeClass('active');
             $elem.addClass('active');
-            $('.episode-info-number').text(i18n.__('Season %s', $('.template-' + tvdbid + ' .season').html()) + ', ' + i18n.__('Episode %s', $('.template-' + tvdbid + ' .episode').html()));
-            $('.episode-info-title').text($('.template-' + tvdbid + ' .title').text());
-            $('.episode-info-date').text(i18n.__('Aired Date') + ': ' + $('.template-' + tvdbid + ' .date').html());
-            $('.episode-info-description').text($('.template-' + tvdbid + ' .overview').text());
+            $('.sdoi-number').text(i18n.__('Season %s', $('.template-' + tvdbid + ' .season').html()) + ', ' + i18n.__('Episode %s', $('.template-' + tvdbid + ' .episode').html()));
+            $('.sdoi-title').text($('.template-' + tvdbid + ' .title').text());
+            $('.sdoi-date').text(i18n.__('Aired Date') + ': ' + $('.template-' + tvdbid + ' .date').html());
+            $('.sdoi-synopsis').text($('.template-' + tvdbid + ' .overview').text());
 
             //pull the scroll always to top
-            $('.episode-info-description').scrollTop(0);
+            $('.sdoi-synopsis').scrollTop(0);
 
             $('.startStreaming').attr('data-torrent', torrents.def);
             $('.startStreaming').attr('data-quality', torrents.quality);
@@ -787,7 +791,7 @@
             if (torrent.substring(0, 8) === 'magnet:?') {
                 // if 'magnet:?' is because TVApi sends back links, not magnets
 
-                torrent = torrent.split('&tr')[0] + '&tr=udp://tracker.openbittorrent.com:80/announce' + '&tr=udp://open.demonii.com:1337/announce' + '&tr=udp://tracker.coppersurfer.tk:6969';
+                torrent = torrent.split('&tr')[0] + '&tr=udp://tracker.openbittorrent.com:80/announce' + '&tr=udp://9.rarbg.com:2710/announce' + '&tr=udp://tracker.coppersurfer.tk:6969' + '&tr=udp://tracker.publicbt.com:80/announce';
 
                 torrentHealth(torrent, {
                     timeout: 1000

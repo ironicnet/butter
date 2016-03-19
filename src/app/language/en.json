@@ -492,12 +492,29 @@
 	"Currently watching": "Currently watching",
 	"No, it's not that": "No, it's not that",
 	"Correct": "Correct",
-	"Initializing %s. Please Wait...": "Initializing %s. Please Wait...",
 	"Indie": "Indie",
-	"%s stores an encrypted hash of your password in your local database": "%s stores an encrypted hash of your password in your local database",
 	"sci-fi": "sci-fi",
 	"dance,opera,ballet": "dance,opera,ballet",
 	"feature_films": "feature_films",
 	"moviesandfilms": "moviesandfilms",
-	"Comedy_Films": "Comedy_Films"
+	"Comedy_Films": "Comedy_Films",
+	"Init Database": "Init Database",
+	"Status: %s ...": "Status: %s ...",
+	"Create Temp Folder": "Create Temp Folder",
+	"Set System Theme": "Set System Theme",
+	"Disclaimer": "Disclaimer",
+	"politics,documentary,corruption": "politics,documentary,corruption",
+	"Series": "Series",
+	"Finished": "Finished",
+	"Event": "Event",
+	"hohoSeries": "hohoSeries",
+	"hohoMovies": "hohoMovies",
+	"Biography, Comedy, Drama": "Biography, Comedy, Drama",
+	"%d hour remaining": {
+		"one": "%d hour remaining",
+		"other": 13
+	},
+	"thriller,conspiracy,indie": "thriller,conspiracy,indie",
+	"Animation, Comedy, Fantasy": "Animation, Comedy, Fantasy",
+	"blah": "blah"
 }

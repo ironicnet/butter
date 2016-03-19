@@ -199,25 +199,55 @@
             tables: ['metadata']
         },
 
-        providers: {
-            movie: ['Vodo', 'Archive'],
-            subtitle: 'YSubs',
-            metadata: 'Trakttv',
-            tvst: 'TVShowTime',
-
-            tvshowsubtitle: 'OpenSubtitles',
-            torrentCache: 'TorrentCache'
+        getTabTypes: function () {
+            return _.sortBy(_.filter(_.map(Settings.providers, function (p, t) {
+                return {
+                    name: p.name,
+                    order: p.order || 1,
+                    type: t
+                };
+            }), function (p) {
+                return p.name;
+            }), 'order');
         },
 
-        getProvider: function (type) {
-            var provider = App.Config.providers[type];
-            if (provider instanceof Array) {
+        getProviderForType: function (type) {
+            var provider = Settings.providers[type];
+            if (typeof provider !== 'string') {
+                if (provider.uri) {
+                    provider = provider.uri;
+                }
+            }
+
+            if (!provider) {
+                win.warn('Provider type: \'%s\' isn\'t defined in App.Config.providers', type);
+                return;
+            } else if (provider instanceof Array || typeof provider === 'object') {
                 return _.map(provider, function (t) {
                     return App.Providers.get(t);
                 });
+            } else {
+                return App.Providers.get(provider);
             }
-            return App.Providers.get(provider);
+        },
+
+        getProviderNameForType: function (type) {
+            return this.getProviderForType(type).map(function (p) {
+                return p.config.tabName;
+            });
+        },
+
+        getFiltredProviderNames: function (type) {
+            var ret = {};
+            this.getProviderNameForType(type).map(function (n) {
+                ret[n] = ret[n] ? ret[n] + 1 : 1;
+            });
+
+            return _.map(ret, function (v, k) {
+                return k.concat((v > 1) ? ':' + v : '');
+            });
         }
+
     };
 
     App.Config = Config;

@@ -7,6 +7,10 @@
         this.ttl = ttl;
     };
 
+    CacheProvider.prototype.config = {
+        name: 'CacheProviderV2'
+    };
+
     CacheProvider.prototype.fetch = function (ids) {
         var self = this;
         if (this._cache._openPromise.isFulfilled()) {
